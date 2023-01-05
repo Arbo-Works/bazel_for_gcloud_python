@@ -127,6 +127,9 @@ def _py_cloud_function_impl(ctx):
   if ctx.attr.region:
     gcloud_cmdline.extend(['--region', ctx.attr.region])
   
+  if ctx.attr.secrets:
+    gcloud_cmdline.extend(['--set-secrets', (',').join(ctx.attr.secrets)])
+
   gcloud_cmdline_str = ' '.join(gcloud_cmdline)
   deploy_script_content = DEPLOY_SCRIPT_TEMPLATE.replace('{gcloud_cmdline}', gcloud_cmdline_str)
   ctx.actions.write(output = ctx.outputs.deploy, content = deploy_script_content)
@@ -138,6 +141,7 @@ def _py_cloud_function_impl(ctx):
     inputs += ctx.attr.requirements_file.files.to_list()
   if ctx.attr.environments_file:
     inputs += ctx.attr.environments_file.files.to_list()
+  
   ctx.actions.run(
     inputs =  inputs,
     outputs = [ctx.outputs.code_archive],
@@ -163,6 +167,7 @@ py_cloud_function = rule(
     'gcloud_project': attr.string(),
     'region': attr.string(),
     'deploy_name': attr.string(),
+    'secrets': attr.string_list(),
     'service_account_email': attr.string(),
     'trigger_topic': attr.string(),
     'trigger_bucket': attr.string(),
