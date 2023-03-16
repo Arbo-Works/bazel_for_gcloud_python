@@ -60,7 +60,7 @@ if [[ $INCLUDE_EXTERNAL ]]; then
   # be added to requirements.in of the cloud function rule, because we cannot
   # tell generaically from here where the python import root in such workspaces
   # is.
-  for d in $(cd $output_path/runfiles; ls pip_pypi__*); do
+  for d in $(cd $output_path/runfiles; ls -d pip_pypi__*); do
     if [[ -d $output_path/runfiles/$d ]]; then
       mv $output_path/runfiles/$d $output_external_path
     fi
