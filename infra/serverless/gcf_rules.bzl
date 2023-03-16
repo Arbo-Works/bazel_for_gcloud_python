@@ -59,6 +59,9 @@ def _py_cloud_function_impl(ctx):
     ctx.workspace_name,
   ])
 
+  if ctx.attr.include_external:
+      args.extend(['--include-external'])
+
   if ctx.attr.requirements_file:
     if len(ctx.attr.requirements_file.files.to_list()) > 1:
       fail('There should be only 1 requirements file input.', 'requirements_file')
@@ -185,6 +188,7 @@ py_cloud_function = rule(
     'timeout': attr.int(),
     'debug': attr.bool(),
     'gen2': attr.bool(),
+    'include_external': attr.bool(),
     '_make_package_tool': attr.label(
       executable = True,
       cfg = 'host',
