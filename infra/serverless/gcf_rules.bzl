@@ -59,6 +59,9 @@ def _py_cloud_function_impl(ctx):
     ctx.workspace_name,
   ])
 
+  if ctx.attr.include_external:
+      args.extend(['--include-external'])
+
   if ctx.attr.requirements_file:
     if len(ctx.attr.requirements_file.files.to_list()) > 1:
       fail('There should be only 1 requirements file input.', 'requirements_file')
@@ -85,7 +88,7 @@ def _py_cloud_function_impl(ctx):
   if ctx.attr.runtime and ctx.attr.runtime not in PYTHON_RUNTIMES:
     fail('Invalid runtime: {}'.format(ctx.attr.runtime), 'runtime')
   gcloud_cmdline.extend(['--runtime', ctx.attr.runtime or runtime])
-  
+
   gcloud_cmdline.extend(['--entry-point', ctx.attr.entry])
 
   if ctx.attr.service_account_email:
@@ -126,9 +129,15 @@ def _py_cloud_function_impl(ctx):
 
   if ctx.attr.region:
     gcloud_cmdline.extend(['--region', ctx.attr.region])
-  
+
   if ctx.attr.secrets:
     gcloud_cmdline.extend(['--set-secrets', (',').join(ctx.attr.secrets)])
+
+  if ctx.attr.gen2:
+    gcloud_cmdline.extend(['--gen2'])
+
+  if ctx.attr.extra_flags:
+    gcloud_cmdline.extend(ctx.attr.extra_flags)
 
   gcloud_cmdline_str = ' '.join(gcloud_cmdline)
   deploy_script_content = DEPLOY_SCRIPT_TEMPLATE.replace('{gcloud_cmdline}', gcloud_cmdline_str)
@@ -141,7 +150,7 @@ def _py_cloud_function_impl(ctx):
     inputs += ctx.attr.requirements_file.files.to_list()
   if ctx.attr.environments_file:
     inputs += ctx.attr.environments_file.files.to_list()
-  
+
   ctx.actions.run(
     inputs =  inputs,
     outputs = [ctx.outputs.code_archive],
@@ -164,6 +173,7 @@ py_cloud_function = rule(
     'requirements_file': attr.label(allow_files = True),
     'requirements': attr.string_list(),
     'environments_file': attr.label(allow_files = True),
+    'extra_flags': attr.string_list(),
     'gcloud_project': attr.string(),
     'region': attr.string(),
     'deploy_name': attr.string(),
@@ -173,10 +183,12 @@ py_cloud_function = rule(
     'trigger_bucket': attr.string(),
     'trigger_event': attr.string(),
     'trigger_resource': attr.string(),
-    'retry': attr.bool(), 
+    'retry': attr.bool(),
     'memory': attr.int(values = MEMORY_VALUES, default = 256),
     'timeout': attr.int(),
     'debug': attr.bool(),
+    'gen2': attr.bool(),
+    'include_external': attr.bool(),
     '_make_package_tool': attr.label(
       executable = True,
       cfg = 'host',
